@@ -4,7 +4,7 @@ var baseClass = {
 	"font-size": "12px",
 }
 var OPERATORS = ["+","-","*","/","^"]
-var CHOICES = [">","≥","=", "≤","<"]
+var CHOICES = [">","&#8805;","=", "&#8804;","<"]
 var creator = new Creator(document.getElementById("creation"), OmegaNum, "project", mode);
 
 let saveInterval = setInterval(function() {

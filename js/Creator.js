@@ -20,6 +20,7 @@ class Creator {
 			numbers: "number",
 			events: "event",
 			buttons: "button",
+			formulas: "formula",
 		};
 	}
 
@@ -99,7 +100,7 @@ class Creator {
 					else if (actionCode[2]=="*") this.js+=".times("
 					else if (actionCode[2]=="/") this.js+=".div("
 					else if (actionCode[2]=="^") this.js+=".pow("
-					this.js += Object.keys(this.numbers).includes(actionCode[3])?"player['"+actionCode[3]+"']":("'"+actionCode[3]+"'");
+					this.js += Object.keys(this.numbers).includes(actionCode[3])?"player['"+actionCode[3]+"']":((Object.keys(this.formulas).includes(actionCode[3]))?(actionCode[3]+"()"):("'"+actionCode[3]+"'"));
 					this.js += ")"+((actionCode[2]=="-")?".max(0)":"")+";\n"
 				} else {
 					this.js += "\tif (!player['"+actionCode[1]+"']"
@@ -108,7 +109,7 @@ class Creator {
 					else if (actionCode[2]=="<") this.js+=".lt("
 					else if (actionCode[2]=="≤") this.js+=".lte("
 					else this.js+=".eq("
-					this.js += Object.keys(this.numbers).includes(actionCode[3])?"player['"+actionCode[3]+"']":("'"+actionCode[3]+"'");
+					this.js += Object.keys(this.numbers).includes(actionCode[3])?"player['"+actionCode[3]+"']":((Object.keys(this.formulas).includes(actionCode[3]))?(actionCode[3]+"()"):"'"+actionCode[3]+"'");
 					this.js += ")) return;\n"
 				}
 			}
@@ -120,24 +121,25 @@ class Creator {
 			this.js += "\tlet x = new OmegaNum('"+this.formulas[formulaID].base+"');\n"
 			for (let j=0;j<Object.keys(this.formulas[formulaID]).length;j++) {
 				let innerID = Object.keys(this.formulas[formulaID])[j]
+				if (innerID=="base") continue;
 				let code = this.formulas[formulaID][innerID]
 				if (code.type=="adjustment") {
 					this.js += "\tx = x"
-					if (actionCode[2]=="+") this.js+=".plus("
-					else if (actionCode[2]=="-") this.js+=".minus("
-					else if (actionCode[2]=="*") this.js+=".times("
-					else if (actionCode[2]=="/") this.js+=".div("
-					else if (actionCode[2]=="^") this.js+=".pow("
-					this.js += Object.keys(this.numbers).includes(actionCode[3])?"player['"+actionCode[3]+"']":("'"+actionCode[3]+"'");
-					this.js += ")"+((actionCode[2]=="-")?".max(0)":"")+";\n"
+					if (code[2]=="+") this.js+=".plus("
+					else if (code[2]=="-") this.js+=".minus("
+					else if (code[2]=="*") this.js+=".times("
+					else if (code[2]=="/") this.js+=".div("
+					else if (code[2]=="^") this.js+=".pow("
+					this.js += Object.keys(this.numbers).includes(code[3])?"player['"+code[3]+"']":((Object.keys(this.formulas).includes(code[3]))?(code[3]+"()"):"'"+code[3]+"'");
+					this.js += ")"+((code[2]=="-")?".max(0)":"")+";\n"
 				} else {
-					this.js += "\tif (!player['"+actionCode[1]+"']"
-					if (actionCode[2]==">") this.js+=".gt("
-					else if (actionCode[2]=="≥") this.js+=".gte("
-					else if (actionCode[2]=="<") this.js+=".lt("
-					else if (actionCode[2]=="≤") this.js+=".lte("
+					this.js += "\tif (!player['"+code[1]+"']"
+					if (code[2]==">") this.js+=".gt("
+					else if (code[2]=="≥") this.js+=".gte("
+					else if (code[2]=="<") this.js+=".lt("
+					else if (code[2]=="≤") this.js+=".lte("
 					else this.js+=".eq("
-					this.js += Object.keys(this.numbers).includes(actionCode[3])?"player['"+actionCode[3]+"']":("'"+actionCode[3]+"'");
+					this.js += Object.keys(this.numbers).includes(code[3])?"player['"+code[3]+"']":((Object.keys(this.formulas).includes(code[3]))?(code[3]+"()"):"'"+code[3]+"'");
 					this.js += ")) return x;\n"
 				}
 			}
@@ -153,7 +155,8 @@ class Creator {
 		this.js += "\tlet txt = updater_starts[id];\n"
 		this.js += "\tif (txt.includes('{{') && txt.includes('}}')) {\n"
 		this.js += "\t\tlet content = txt.slice(txt.indexOf('{{')+2, txt.indexOf('}}')).split(' ').join('');\n"
-		this.js += "\t\tdocument.getElementById(id).textContent = txt.slice(0, txt.indexOf('{{'))+player[content]+txt.slice(txt.indexOf('}}')+2, txt.length);\n"
+		this.js += "\t\tlet act = player[content];\n"
+		this.js += "\t\tdocument.getElementById(id).textContent = txt.slice(0, txt.indexOf('{{'))+act+txt.slice(txt.indexOf('}}')+2, txt.length);\n"
 		this.js += "\t}\n"
 		this.js += "}\n"
 		this.js += "function save() {\n"
@@ -172,7 +175,7 @@ class Creator {
 		this.js += "}, 50)\n"
 		this.js += "let saveInterval = setInterval(function() {\n"
 		this.js += "\tsave();\n"
-		this.js += "}\n"
+		this.js += "}, 4000)\n"
 	}
 
 	update() {
@@ -272,14 +275,14 @@ class Creator {
 	}
 
 	addToFormula(id) {
-		this.formulas[id][Object.keys(this.formulas[id]||{}).length+1]={type: "adjustment"}
+		this.formulas[id][Object.keys(this.formulas[id]||{}).length]={type: "adjustment"}
 		this.update();
 		hideDropdown();
 		this.openDropdown("formulas", id);
 	}
 
 	addFormulaCondition(id) {
-		this.formulas[id][Object.keys(this.formulas[id]||{}).length+1]={type: "condition"}
+		this.formulas[id][Object.keys(this.formulas[id]||{}).length]={type: "condition"}
 		this.update();
 		hideDropdown();
 		this.openDropdown("formulas", id);
@@ -338,12 +341,12 @@ class Creator {
 	}
 
 	updateFormula(formulaID, partialID) {
-		let p1 = document.getElementById("events1"+formulaID+partialID).value
-		let p2 = document.getElementById("events2"+formulaID+partialID).value
-		let p3 = document.getElementById("events3"+formulaID+partialID).value
-		this.events[formulaID][partialID][1] = p1
-		this.events[formulaID][partialID][2] = p2
-		this.events[formulaID][partialID][3] = p3
+		let p1 = document.getElementById("formulas1"+formulaID+partialID).value
+		let p2 = document.getElementById("formulas2"+formulaID+partialID).value
+		let p3 = document.getElementById("formulas3"+formulaID+partialID).value
+		this.formulas[formulaID][partialID][1] = p1
+		this.formulas[formulaID][partialID][2] = p2
+		this.formulas[formulaID][partialID][3] = p3
 		this.update();
 	}
 
@@ -421,6 +424,10 @@ class Creator {
 						let numID = Object.keys(this.numbers)[j]
 						data += "<option value='"+numID+"'>"
 					}
+					for (let j=0;j<Object.keys(this.formulas).length;j++) {
+						let formID = Object.keys(this.formulas)[j]
+						data += "<option value='"+formID+"'>"
+					}
 					data +="</datalist>"
 				} else {
 					data += "<b>Condition ("+eventID+")</b><br><input style='width: 50px' value='"+(this.events[id][eventID][1]||"")+"' id='events1"+id+eventID+"' type='text' list='eventList1c"+id+eventID+"' onchange='creator.updateEvent(&quot;"+id+"&quot;, &quot;"+eventID+"&quot;)'></input>&nbsp;<input value='"+(this.events[id][eventID][2]||"")+"' id='events2"+id+eventID+"' style='width: 50px' type='text' list='eventList2c"+id+eventID+"' onchange='creator.updateEvent(&quot;"+id+"&quot;, &quot;"+eventID+"&quot;)'></input>&nbsp;<input value='"+(this.events[id][eventID][3]||"")+"' id='events3"+id+eventID+"' style='width: 50px' type='text' list='eventList3c"+id+eventID+"' onchange='creator.updateEvent(&quot;"+id+"&quot;, &quot;"+eventID+"&quot;)'></input><br><br>"
@@ -441,17 +448,21 @@ class Creator {
 						let numID = Object.keys(this.numbers)[j]
 						data += "<option value='"+numID+"'>"
 					}
+					for (let j=0;j<Object.keys(this.formulas).length;j++) {
+						let formID = Object.keys(this.formulas)[j]
+						data += "<option value='"+formID+"'>"
+					}
 					data +="</datalist>"
 				}
 			}
 			data += "<button class='btn' onclick='creator.addToEvent(&quot;"+id+"&quot;)'>Add Action</button>"
 			data += "&nbsp;<button class='btn' onclick='creator.addCondition(&quot;"+id+"&quot;)'>Add Condition</button><br>"
 		} else if (type=="formulas") {
-			data += "<b>Base</b><br><input value='"+(this.formulas[id].base||"")+"' id='formulasBase"+id"' type='text' onchange='creator.updateFormulaBase(&quot;"+id+"&quot;)'></input>"
+			data += "<b>Base</b><br><input value='"+(this.formulas[id].base||"")+"' id='formulasBase"+id+"' type='text' onchange='creator.updateFormulaBase(&quot;"+id+"&quot;)'></input><br><br>"
 			let len = Object.keys(this.formulas[id]).length
 			if (len>0) for (let i=0;i<len;i++) {
 				let partialID = Object.keys(this.formulas[id])[i]
-				if (this.formulas[id][partialID].type=="action") {
+				if (this.formulas[id][partialID].type=="adjustment") {
 					data += "<b>Adjustment ("+partialID+")</b><br><input style='display: none;' value='"+(this.formulas[id][partialID][1]||"")+"' style='width: 50px' id='formulas1"+id+partialID+"' type='text' list='formulaList1"+id+partialID+"' onchange='creator.updateFormula(&quot;"+id+"&quot;, &quot;"+partialID+"&quot;)'></input>&nbsp;<input id='formulas2"+id+partialID+"' value='"+(this.formulas[id][partialID][2]||"")+"' style='width: 50px' type='text' list='formulaList2"+id+partialID+"' onchange='creator.updateFormula(&quot;"+id+"&quot;, &quot;"+partialID+"&quot;)'></input>&nbsp;<input id='formulas3"+id+partialID+"' value='"+(this.formulas[id][partialID][3]||"")+"' style='width: 50px' type='text' list='formulaList3"+id+partialID+"' onchange='creator.updateFormula(&quot;"+id+"&quot;, &quot;"+partialID+"&quot;)'></input><br><br>"
 					data += "<datalist id='formulaList1"+id+partialID+"'>"
 					for (let j=0;j<Object.keys(this.numbers).length;j++) {
@@ -470,8 +481,12 @@ class Creator {
 						let numID = Object.keys(this.numbers)[j]
 						data += "<option value='"+numID+"'>"
 					}
+					for (let j=0;j<Object.keys(this.formulas).length;j++) {
+						let formID = Object.keys(this.formulas)[j]
+						if (formID!=id) data += "<option value='"+formID+"'>"
+					}
 					data +="</datalist>"
-				} else {
+				} else if (this.formulas[id][partialID].type!==undefined) {
 					data += "<b>Condition ("+partialID+")</b><br><input style='width: 50px' value='"+(this.formulas[id][partialID][1]||"")+"' id='formulas1"+id+partialID+"' type='text' list='formulaList1c"+id+partialID+"' onchange='creator.updateFormula(&quot;"+id+"&quot;, &quot;"+partialID+"&quot;)'></input>&nbsp;<input value='"+(this.formulas[id][partialID][2]||"")+"' id='formulas2"+id+partialID+"' style='width: 50px' type='text' list='formulaList2c"+id+partialID+"' onchange='creator.updateFormula(&quot;"+id+"&quot;, &quot;"+partialID+"&quot;)'></input>&nbsp;<input value='"+(this.formulas[id][partialID][3]||"")+"' id='formulas3"+id+partialID+"' style='width: 50px' type='text' list='formulaList3c"+id+partialID+"' onchange='creator.updateFormula(&quot;"+id+"&quot;, &quot;"+partialID+"&quot;)'></input><br><br>"
 					data += "<datalist id='formulaList1c"+id+partialID+"'>"
 					for (let j=0;j<Object.keys(this.numbers).length;j++) {
@@ -489,6 +504,10 @@ class Creator {
 					for (let j=0;j<Object.keys(this.numbers).length;j++) {
 						let numID = Object.keys(this.numbers)[j]
 						data += "<option value='"+numID+"'>"
+					}
+					for (let j=0;j<Object.keys(this.formulas).length;j++) {
+						let formID = Object.keys(this.formulas)[j]
+						if (formID!=id) data += "<option value='"+formID+"'>"
 					}
 					data +="</datalist>"
 				}
