@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<head>
+	<title>IC Documentation</title>
+	<link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body style="text-align: center;">
+	<h2>Elements</h2><br><br>
+	Everything mentioned below is a type of element (including text, classes, etc.). Each element that you create has an ID, which you choose, and can reference later. You cannot have the same ID for two elements.
+	<br><br><h2>Text</h2><br><br>
+	You can create text, and choose its position on the screen (distance from top & left sides of screen). One special property of text is that if you type it in like {{ numID }}, you can reference a number through its id, but you can ONLY do this once per text ID.
+	<br><br><h2>Numbers</h2><br><br>
+	Numbers are values that are stored using OmegaNum (a large number library made by Naruyoko). They can change through various events, and can be referenced by text as shown above.
+	<br><br><h2>Classes</h2><br><br>
+	A "class" is something you can assign to text or other elements to give it a different visual appearance, based on the modifiers you provide. Some of them include "color", "font-size" (ex: 12px, 15px, 20px), "visibility" (ex: visible, hidden), "width" or "height" (ex: 50px, 100px, 50%), "border-color", and many more! (almost anything from css also works here with reduced usability, for any of you crazy coders out there)
+	<br><br><h2>Events</h2><br><br>
+	An "event" is something that can happen through triggers such as buttons. Each event contains various actions, which can impact numbers. The following are a few: [var]{+}[1] will increase var by 1. [var]{-}[1] will decrease var by 1. Same goes for multiplication {*}, division {/}, and exponentiation {^}. You can also increment var1 by var2 by writing [var1]{+}[var2]. Keep in mind that when using [var]{+}[x], var will not go below 0. You can also add conditions to events, which means that any following actions in that event will only be called if the condition is deemed true.
+	<br><br><h2>Buttons</h2><br><br>
+	Buttons allow you to trigger Events, and can also use the {{num}} syntax, but ONLY once per button.
+</body>

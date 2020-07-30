@@ -1,0 +1,46 @@
+*:focus {
+	outline: none;
+}
+
+#dropdown {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	opacity: 75%;
+	background-color: black;
+	width: 300px;
+	min-height: 50px;
+	color: white;
+	text-align: center;
+}
+
+button:hover {
+	filter: brightness(140%);
+}
+
+.btn {
+	background-color: #694201;
+	opacity: 80%;
+	color: white;
+	font-weight: bold;
+	width: 100px;
+	min-height: 25px;
+	cursor: pointer;
+	border-radius: 20px;
+	border: none;
+	transition-duration: 0.5s;
+}
+
+.shortbtn {
+	background-color: #694201;
+	opacity: 80%;
+	color: white;
+	font-weight: bold;
+	min-width: 10px;
+	max-width: 50px;
+	min-height: 25px;
+	cursor: pointer;
+	border-radius: 20px;
+	border: none;
+	transition-duration: 0.5s;
+}
