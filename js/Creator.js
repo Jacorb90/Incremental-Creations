@@ -22,6 +22,26 @@ class Creator {
 		};
 	}
 
+	load() {
+		let save = localStorage.getItem("incremental-creations")
+		if (save!==null) {
+			let data = JSON.parse(atob(save))
+			this.name = data.name
+			this.text = data.text
+			this.classes = data.classes
+			this.numbers = data.numbers
+			this.events = data.events
+			this.buttons = data.buttons
+			this.mode = data.mode
+			this.updaters = data.updaters
+			this.update();
+		}
+	}
+
+	save() {
+		localStorage.setItem("incremental-creations", btoa(JSON.stringify(this)))
+	}
+
 	updateHTML() {
 		this.html = "<!DOCTYPE html ><head><link rel='stylesheet' type='text/css' href='style.css'/></head><body onload='onLoad()'>"
 		for (let i=0;i<Object.keys(this.text).length;i++) {
@@ -55,10 +75,13 @@ class Creator {
 	updateJS() {
 		this.js = "function onLoad() {\n"
 		this.js += "\tplayer = {};\n"
+		this.js += "\tlet d = localStorage.getItem('incremental-creations"+this.name+"');\n"
+		this.js += "\tlet saveData = d?JSON.parse(atob(d)):{}\n"
 		for (let i=0;i<Object.keys(this.numbers).length;i++) {
 			let numID = Object.keys(this.numbers)[i]
 			let numData = Object.values(this.numbers)[i]
-			this.js += "\tplayer['"+numID+"'] = new OmegaNum("+numData.start+");\n"
+			this.js += "\tif (Object.keys(saveData).includes(numID)) player['"+numID+"'] = new OmegaNum(saveData[numID]);\n" 
+			this.js += "\telse player['"+numID+"'] = new OmegaNum("+numData.start+");\n"
 		}
 		this.js += "};\n"
 		for (let i=0;i<Object.keys(this.events).length;i++) {
@@ -79,7 +102,9 @@ class Creator {
 				} else {
 					this.js += "\tif (!player['"+actionCode[1]+"']"
 					if (actionCode[2]==">") this.js+=".gt("
+					else if (actionCode[2]=="≥") this.js+=".gte("
 					else if (actionCode[2]=="<") this.js+=".lt("
+					else if (actionCode[2]=="≤") this.js+=".lte("
 					else this.js+=".eq("
 					this.js += Object.keys(this.numbers).includes(actionCode[3])?"player['"+actionCode[3]+"']":("'"+actionCode[3]+"'");
 					this.js += ")) return;\n"
@@ -95,9 +120,12 @@ class Creator {
 		this.js += "function parseForUpdates(id) {\n"
 		this.js += "\tlet txt = updater_starts[id];\n"
 		this.js += "\tif (txt.includes('{{') && txt.includes('}}')) {\n"
-		this.js += "\t\tlet content = txt.slice(txt.indexOf('{{')+2, txt.indexOf('}}'));\n"
+		this.js += "\t\tlet content = txt.slice(txt.indexOf('{{')+2, txt.indexOf('}}')).split(' ').join('');\n"
 		this.js += "\t\tdocument.getElementById(id).textContent = txt.slice(0, txt.indexOf('{{'))+player[content]+txt.slice(txt.indexOf('}}')+2, txt.length);\n"
 		this.js += "\t}\n"
+		this.js += "}\n"
+		this.js += "function save() {\n"
+		this.js += "\tlocalStorage.setItem('incremental-creations"+this.name+"', btoa(JSON.stringify(player)))"
 		this.js += "}\n"
 		this.js += "function gameLoop(diff) {\n"
 		for (let i=0;i<this.updaters.length;i++) {
@@ -109,7 +137,10 @@ class Creator {
 		this.js += "let interval = setInterval(function() {\n"
 		this.js += "\tgameLoop(new Date().getTime()-lastTime);\n"
 		this.js += "\tlastTime = new Date().getTime();\n"
-		this.js += "}, 50)"
+		this.js += "}, 50)\n"
+		this.js += "let saveInterval = setInterval(function() {\n"
+		this.js += "\tsave();\n"
+		this.js += "}\n"
 	}
 
 	update() {
@@ -362,6 +393,7 @@ class Creator {
 
 	delete(type, id) {
 		if (!confirm("Are you sure you want to delete this? You won't be able to undo this!")) return
+		if (type=="buttons"||type=="text") this.updaters.splice(this.updaters.indexOf(type+id), 1)
 		delete this[type][id]
 		hideDropdown();
 		this.update();
@@ -392,6 +424,7 @@ class Creator {
 		zip.generateAsync({type:"blob"}).then(function(content) {
     		saveAs(content, name+".zip");
 		});
+		this.save();
 	}
 
 	rename() {

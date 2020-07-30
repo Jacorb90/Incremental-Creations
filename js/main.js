@@ -4,8 +4,12 @@ var baseClass = {
 	"font-size": "12px",
 }
 var OPERATORS = ["+","-","*","/","^"]
-var CHOICES = [">","=","<"]
+var CHOICES = [">","≥","=", "≤","<"]
 var creator = new Creator(document.getElementById("creation"), OmegaNum, "project", mode);
+
+let saveInterval = setInterval(function() {
+	creator.save();
+}, 10000)
 
 function toggleDropdown(content) {
 	document.getElementById("dropdown").style.display = "block"
@@ -23,3 +27,5 @@ function capitalFirst(str) {
 		.map(x => x[0].toUpperCase() + x.slice(1))
 		.join(" ");
 }
+
+creator.load();
