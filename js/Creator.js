@@ -87,6 +87,9 @@ class Creator {
 			this.js += "\telse player['"+numID+"'] = new OmegaNum("+numData.start+");\n"
 		}
 		this.js += "};\n"
+		this.js += "OmegaNum.prototype.toSWDP = function(digits) {\n"
+		this.js += "\treturn new OmegaNum(this).times(OmegaNum.pow(10, digits)).round().div(OmegaNum.pow(10, digits));\n"
+		this.js += "}\n"
 		for (let i=0;i<Object.keys(this.events).length;i++) {
 			let eventID = Object.keys(this.events)[i]
 			this.js += "function "+eventID+"() {\n"
@@ -95,21 +98,21 @@ class Creator {
 				let actionCode = this.events[eventID][actionID]
 				if (actionCode.type=="action") {
 					this.js += "\tplayer['"+actionCode[1]+"'] = player['"+actionCode[1]+"']"
-					if (actionCode[2]=="+") this.js+=".plus("
-					else if (actionCode[2]=="-") this.js+=".minus("
-					else if (actionCode[2]=="*") this.js+=".times("
-					else if (actionCode[2]=="/") this.js+=".div("
-					else if (actionCode[2]=="^") this.js+=".pow("
-					this.js += Object.keys(this.numbers).includes(actionCode[3])?"player['"+actionCode[3]+"']":((Object.keys(this.formulas).includes(actionCode[3]))?(actionCode[3]+"()"):("'"+actionCode[3]+"'"));
-					this.js += ")"+((actionCode[2]=="-")?".max(0)":"")+";\n"
+					if (actionCode[2]=="&#43;") this.js+=".plus("
+					else if (actionCode[2]=="&#45;") this.js+=".minus("
+					else if (actionCode[2]=="&#42;") this.js+=".times("
+					else if (actionCode[2]=="&#47;") this.js+=".div("
+					else if (actionCode[2]=="&#94;") this.js+=".pow("
+					this.js += Object.keys(this.numbers).includes(actionCode[3])?("player['"+actionCode[3]+"']"):((Object.keys(this.formulas).includes(actionCode[3]))?(actionCode[3]+"()"):("'"+actionCode[3]+"'"));
+					this.js += ")"+((actionCode[2]=="&#45;")?".max(0)":"")+";\n"
 				} else {
 					this.js += "\tif (!player['"+actionCode[1]+"']"
-					if (actionCode[2]==">") this.js+=".gt("
-					else if (actionCode[2]=="≥") this.js+=".gte("
-					else if (actionCode[2]=="<") this.js+=".lt("
-					else if (actionCode[2]=="≤") this.js+=".lte("
+					if (actionCode[2]=="&#62;") this.js+=".gt("
+					else if (actionCode[2]=="&#8805;") this.js+=".gte("
+					else if (actionCode[2]=="&#60;") this.js+=".lt("
+					else if (actionCode[2]=="&#8804;") this.js+=".lte("
 					else this.js+=".eq("
-					this.js += Object.keys(this.numbers).includes(actionCode[3])?"player['"+actionCode[3]+"']":((Object.keys(this.formulas).includes(actionCode[3]))?(actionCode[3]+"()"):"'"+actionCode[3]+"'");
+					this.js += Object.keys(this.numbers).includes(actionCode[3])?("player['"+actionCode[3]+"']"):((Object.keys(this.formulas).includes(actionCode[3]))?(actionCode[3]+"()"):"'"+actionCode[3]+"'");
 					this.js += ")) return;\n"
 				}
 			}
@@ -125,21 +128,22 @@ class Creator {
 				let code = this.formulas[formulaID][innerID]
 				if (code.type=="adjustment") {
 					this.js += "\tx = x"
-					if (code[2]=="+") this.js+=".plus("
-					else if (code[2]=="-") this.js+=".minus("
-					else if (code[2]=="*") this.js+=".times("
-					else if (code[2]=="/") this.js+=".div("
-					else if (code[2]=="^") this.js+=".pow("
-					this.js += Object.keys(this.numbers).includes(code[3])?"player['"+code[3]+"']":((Object.keys(this.formulas).includes(code[3]))?(code[3]+"()"):"'"+code[3]+"'");
-					this.js += ")"+((code[2]=="-")?".max(0)":"")+";\n"
+					if (code[2]=="&#43;") this.js+=".plus("
+					else if (code[2]=="&#45;") this.js+=".minus("
+					else if (code[2]=="&#42;") this.js+=".times("
+					else if (code[2]=="&#47;") this.js+=".div("
+					else if (code[2]=="&#94;") this.js+=".pow("
+					else if (code[2]=="&#114;") this.js+=".toSWDP("
+					this.js += Object.keys(this.numbers).includes(code[3])?("player['"+code[3]+"']"):((Object.keys(this.formulas).includes(code[3]))?(code[3]+"()"):"'"+code[3]+"'");
+					this.js += ")"+((code[2]=="&#45;")?".max(0)":"")+";\n"
 				} else {
 					this.js += "\tif (!player['"+code[1]+"']"
-					if (code[2]==">") this.js+=".gt("
-					else if (code[2]=="≥") this.js+=".gte("
-					else if (code[2]=="<") this.js+=".lt("
-					else if (code[2]=="≤") this.js+=".lte("
+					if (code[2]=="&#62;") this.js+=".gt("
+					else if (code[2]=="&#8805;") this.js+=".gte("
+					else if (code[2]=="&#60;") this.js+=".lt("
+					else if (code[2]=="&#8804;") this.js+=".lte("
 					else this.js+=".eq("
-					this.js += Object.keys(this.numbers).includes(code[3])?"player['"+code[3]+"']":((Object.keys(this.formulas).includes(code[3]))?(code[3]+"()"):"'"+code[3]+"'");
+					this.js += Object.keys(this.numbers).includes(code[3])?("player['"+code[3]+"']"):((Object.keys(this.formulas).includes(code[3]))?(code[3]+"()"):"'"+code[3]+"'");
 					this.js += ")) return x;\n"
 				}
 			}
@@ -155,12 +159,19 @@ class Creator {
 		this.js += "\tlet txt = updater_starts[id];\n"
 		this.js += "\tif (txt.includes('{{') && txt.includes('}}')) {\n"
 		this.js += "\t\tlet content = txt.slice(txt.indexOf('{{')+2, txt.indexOf('}}')).split(' ').join('');\n"
-		this.js += "\t\tlet act = player[content];\n"
+		this.js += "\t\tlet act;\n"
+		this.js += "\t\tif (player[content]===undefined) act = window[content]();\n"
+		this.js += "\t\telse act = player[content];\n"
 		this.js += "\t\tdocument.getElementById(id).textContent = txt.slice(0, txt.indexOf('{{'))+act+txt.slice(txt.indexOf('}}')+2, txt.length);\n"
 		this.js += "\t}\n"
 		this.js += "}\n"
 		this.js += "function save() {\n"
 		this.js += "\tlocalStorage.setItem('incremental-creations"+this.name+"', btoa(JSON.stringify(player)))"
+		this.js += "}\n"
+		this.js += "function hardReset(force=false) {\n"
+		this.js += "\tif (!force) if (!confirm('Are you sure you want to reset everything?')) return;\n"
+		this.js += "\tlocalStorage.removeItem('incremental-creations"+this.name+"');\n"
+		this.js += "\tonLoad();\n"
 		this.js += "}\n"
 		this.js += "function gameLoop(diff) {\n"
 		for (let i=0;i<this.updaters.length;i++) {
@@ -182,6 +193,7 @@ class Creator {
 		this.updateHTML();
 		this.updateCSS();
 		this.updateJS();
+		this.save();
 	}
 
 	updateText(id, type) {
@@ -332,7 +344,7 @@ class Creator {
 
 	updateEvent(eventID, actionID) {
 		let p1 = document.getElementById("events1"+eventID+actionID).value
-		let p2 = document.getElementById("events2"+eventID+actionID).value
+		let p2 = document.getElementById("events2"+eventID+actionID).value.includes("&#") ? document.getElementById("events2"+eventID+actionID).value : ("&#"+document.getElementById("events2"+eventID+actionID).value.charCodeAt(0)+";");
 		let p3 = document.getElementById("events3"+eventID+actionID).value
 		this.events[eventID][actionID][1] = p1
 		this.events[eventID][actionID][2] = p2
@@ -342,7 +354,7 @@ class Creator {
 
 	updateFormula(formulaID, partialID) {
 		let p1 = document.getElementById("formulas1"+formulaID+partialID).value
-		let p2 = document.getElementById("formulas2"+formulaID+partialID).value
+		let p2 = document.getElementById("formulas2"+formulaID+partialID).value.includes("&#") ? document.getElementById("formulas2"+formulaID+partialID).value : ("&#"+document.getElementById("formulas2"+formulaID+partialID).value.charCodeAt(0)+";");
 		let p3 = document.getElementById("formulas3"+formulaID+partialID).value
 		this.formulas[formulaID][partialID][1] = p1
 		this.formulas[formulaID][partialID][2] = p2
@@ -360,6 +372,24 @@ class Creator {
 		this.update();
 	}
 
+	deleteEventThing(eventID) {
+		if (Object.keys(this.events[eventID]).length>0) {
+			if (!confirm("Are you sure you want to delete this?")) return
+			delete this.events[eventID][Object.keys(this.events[eventID]).length]
+		}
+		this.update();
+		this.openDropdown("events", eventID)
+	}
+
+	deleteFormulaThing(id) {
+		if (Object.keys(this.formulas[id]).length>1) {
+			if (!confirm("Are you sure you want to delete this?")) return
+			delete this.formulas[id][Object.keys(this.formulas[id]).length-1]
+		}
+		this.update();
+		this.openDropdown("formulas", id)
+	}
+
 	openDropdown(type, id) {
 		let data = "<h2><b>"+id+"</b></h2><br>"
 		if (type=="buttons") {
@@ -370,6 +400,7 @@ class Creator {
 				let eventID = Object.keys(this.events)[j]
 				data += "<option value='"+eventID+"'>"
 			}
+			data += "<option value='hardReset'>"
 			data +="</datalist>"
 			data += "<b>Distance from Top (pixels, maximum "+screen.height+")</b><br><input id='buttons"+id+"top' type='number' onchange='creator.updateBtn(&quot;"+id+"&quot;, &quot;top&quot;)' value='"+(this.buttons[id].top||0)+"'></input><br><br>"
 			data += "<b>Distance from Left (pixels, maximum "+screen.width+")</b><br><input id='buttons"+id+"left' type='number' onchange='creator.updateBtn(&quot;"+id+"&quot;, &quot;left&quot;)' value='"+(this.buttons[id].left||0)+"'></input><br><br>"
@@ -456,7 +487,8 @@ class Creator {
 				}
 			}
 			data += "<button class='btn' onclick='creator.addToEvent(&quot;"+id+"&quot;)'>Add Action</button>"
-			data += "&nbsp;<button class='btn' onclick='creator.addCondition(&quot;"+id+"&quot;)'>Add Condition</button><br>"
+			data += "&nbsp;<button class='btn' onclick='creator.addCondition(&quot;"+id+"&quot;)'>Add Condition</button>"
+			data += "&nbsp;<button class='btn' onclick='creator.deleteEventThing(&quot;"+id+"&quot;)'>Delete One</button><br>"
 		} else if (type=="formulas") {
 			data += "<b>Base</b><br><input value='"+(this.formulas[id].base||"")+"' id='formulasBase"+id+"' type='text' onchange='creator.updateFormulaBase(&quot;"+id+"&quot;)'></input><br><br>"
 			let len = Object.keys(this.formulas[id]).length
@@ -475,6 +507,7 @@ class Creator {
 						let op = OPERATORS[j]
 						data += "<option value='"+op+"'>"
 					}
+					data += "<option value='r'>"
 					data +="</datalist>"
 					data += "<datalist id='formulaList3"+id+partialID+"'>"
 					for (let j=0;j<Object.keys(this.numbers).length;j++) {
@@ -514,6 +547,7 @@ class Creator {
 			}
 			data += "<button class='btn' onclick='creator.addToFormula(&quot;"+id+"&quot;)'>Add Adjustment</button>"
 			data += "&nbsp;<button class='btn' onclick='creator.addFormulaCondition(&quot;"+id+"&quot;)'>Add Condition</button><br>"
+			data += "&nbsp;<button class='btn' onclick='creator.deleteFormulaThing(&quot;"+id+"&quot;)'>Delete One</button><br>"
 		}
 		data += "<button class='shortbtn' onclick='hideDropdown()'>X</button><br>"
 		toggleDropdown(data);
@@ -565,5 +599,11 @@ class Creator {
 		let name = prompt("Rename project?").split(' ').join('-')
 		if (name=="") name = this.name
 		this.name = name
+	}
+
+	reset() {
+		if (!confirm("Are you sure you want to start your project from scratch?")) return
+		localStorage.removeItem("incremental-creations")
+		window.location.reload();
 	}
 }
