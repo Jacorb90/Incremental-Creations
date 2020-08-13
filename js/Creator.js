@@ -14,6 +14,7 @@ class Creator {
 		this.mode = mode;
 		this.updaters = [];
 		this.formulas = {};
+		this.passive = {};
 		this.realName = {
 			text: "text",
 			classes: "class",
@@ -21,6 +22,7 @@ class Creator {
 			events: "event",
 			buttons: "button",
 			formulas: "formula",
+			passive: "passive",
 		};
 	}
 
@@ -37,6 +39,7 @@ class Creator {
 			this.mode = data.mode
 			this.updaters = data.updaters
 			this.formulas = data.formulas||{}
+			this.passive = data.passive||{}
 			this.update();
 		}
 	}
@@ -178,6 +181,19 @@ class Creator {
 			let id = this.updaters[i]
 			this.js += "\tparseForUpdates('"+id+"');\n"
 		}
+		for (let i=0;i<Object.keys(this.passive).length;i++) {
+			let data = this.passive[Object.keys(this.passive)[i]]
+			let code = data.condition
+			this.js += "\tif (player['"+code[1]+"']"
+			if (code[2]=="&#62;") this.js+=".gt("
+			else if (code[2]=="&#8805;") this.js+=".gte("
+			else if (code[2]=="&#60;") this.js+=".lt("
+			else if (code[2]=="&#8804;") this.js+=".lte("
+			else this.js+=".eq("
+			this.js += Object.keys(this.numbers).includes(code[3])?("player['"+code[3]+"']"):((Object.keys(this.formulas).includes(code[3]))?(code[3]+"()"):"'"+code[3]+"'");
+			this.js += ")) "
+			this.js += data.event+"()\n"
+		}
 		this.js += "}\n"
 		this.js += "var lastTime = new Date().getTime();\n"
 		this.js += "let interval = setInterval(function() {\n"
@@ -212,6 +228,28 @@ class Creator {
 			this.text[id][type] = field
 		}
 		document.getElementById("text"+id+type).value = field
+		this.update();
+	}
+
+	updatePassive(id, type) {
+		let field;
+		if (document.getElementById("passive"+id+type)) field = document.getElementById("passive"+id+type).value
+		if (type=="event") this.passive[id][type] = field;
+		else if (type=="condition") {
+			let field1 = document.getElementById("passive1"+id).value
+			let field2 = document.getElementById("passive2"+id).value.includes("&#") ? document.getElementById("passive2"+id).value : ("&#"+document.getElementById("passive2"+id).value.charCodeAt(0)+";");
+			let field3 = document.getElementById("passive3"+id).value
+			if (field2==NaN||field2=="&#NaN;") field2 = ""
+			this.passive[id].condition[1] = field1
+			this.passive[id].condition[2] = field2
+			this.passive[id].condition[3] = field3
+			document.getElementById("passive1"+id).value = field1
+			document.getElementById("passive2"+id).value = field2
+			document.getElementById("passive3"+id).value = field3
+			this.update();
+			return;
+		};
+		document.getElementById("passive"+id+type).value = field
 		this.update();
 	}
 
@@ -548,6 +586,38 @@ class Creator {
 			data += "<button class='btn' onclick='creator.addToFormula(&quot;"+id+"&quot;)'>Add Adjustment</button>"
 			data += "&nbsp;<button class='btn' onclick='creator.addFormulaCondition(&quot;"+id+"&quot;)'>Add Condition</button><br>"
 			data += "&nbsp;<button class='btn' onclick='creator.deleteFormulaThing(&quot;"+id+"&quot;)'>Delete One</button><br>"
+		} else if (type=="passive") {
+			if (this.passive[id].condition === undefined) this.passive[id].condition = {}
+			data += "<b>Condition</b><br><input style='width: 50px' value='"+(this.passive[id].condition[1]||"")+"' id='passive1"+id+"' type='text' list='passiveList1c"+id+"' onchange='creator.updatePassive(&quot;"+id+"&quot;, &quot;condition&quot;, 1)'></input>&nbsp;<input value='"+(this.passive[id].condition[2]||"")+"' id='passive2"+id+"' style='width: 50px' type='text' list='passiveList2c"+id+"' onchange='creator.updatePassive(&quot;"+id+"&quot;, &quot;condition&quot;, 2)'></input>&nbsp;<input value='"+(this.passive[id].condition[3]||"")+"' id='passive3"+id+"' style='width: 50px' type='text' list='passiveList3c"+id+"' onchange='creator.updatePassive(&quot;"+id+"&quot;, &quot;condition&quot;, 3)'></input><br><br>"
+			data += "<datalist id='passiveList1c"+id+"'>"
+			for (let j=0;j<Object.keys(this.numbers).length;j++) {
+				let numID = Object.keys(this.numbers)[j]
+				data += "<option value='"+numID+"'>"
+			}
+			data +="</datalist>"
+			data += "<datalist id='passiveList2c"+id+"'>"
+			for (let j=0;j<CHOICES.length;j++) {
+				let op = CHOICES[j]
+				data += "<option value='"+op+"'>"
+			}
+			data +="</datalist>"
+			data += "<datalist id='passiveList3c"+id+"'>"
+			for (let j=0;j<Object.keys(this.numbers).length;j++) {
+				let numID = Object.keys(this.numbers)[j]
+				data += "<option value='"+numID+"'>"
+			}
+			for (let j=0;j<Object.keys(this.formulas).length;j++) {
+				let formID = Object.keys(this.formulas)[j]
+				if (formID!=id) data += "<option value='"+formID+"'>"
+			}
+			data +="</datalist>"
+			data += "<b>Event</b><br><input id='passive"+id+"event' type='text' list='passiveList"+id+"' onchange='creator.updatePassive(&quot;"+id+"&quot;, &quot;event&quot;)' value='"+(this.passive[id].event||"")+"'></input><br><br>"
+			data += "<datalist id='passiveList"+id+"'>"
+			for (let j=0;j<Object.keys(this.events).length;j++) {
+				let passiveID = Object.keys(this.events)[j]
+				data += "<option value='"+passiveID+"'>"
+			}
+			data +="</datalist>"
 		}
 		data += "<button class='shortbtn' onclick='hideDropdown()'>X</button><br>"
 		toggleDropdown(data);
